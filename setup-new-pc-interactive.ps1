@@ -43,23 +43,49 @@ function Install-WingetPackage {
 
 # --- INICIO DEL SCRIPT ---
 
-Write-Header "1. VERIFICACIÓN DE ESTRUCTURA DE CARPETAS"
-# Esto no se pregunta, se asegura porque es la base de tu orden.
-$folders = @(
+Write-Header "1. CREANDO ESTRUCTURA DE CARPETAS (La Zona de Trabajo)"
+
+# Carpetas estáticas (toolkit, docs, etc.)
+$staticFolders = @(
     "C:\Dev\00_Inbox",
-    "C:\Dev\01_Repositories",
     "C:\Dev\02_Toolkit",
     "C:\Dev\03_KnowledgeBase",
-    "C:\Dev\04_DockerVolumes" 
+    "C:\Dev\04_DockerVolumes"
 )
 
-foreach ($folder in $folders) {
+foreach ($folder in $staticFolders) {
     if (!(Test-Path $folder)) {
         New-Item -ItemType Directory -Force -Path $folder | Out-Null
         Write-Host "Creado: $folder" -ForegroundColor Green
     } else {
         Write-Host "Existe: $folder" -ForegroundColor DarkGray
     }
+}
+
+# --- Lógica Interactiva para 01_Repositories ---
+$baseRepoPath = "C:\Dev\01_Repositories"
+
+if (!(Test-Path $baseRepoPath)) {
+    New-Item -ItemType Directory -Force -Path $baseRepoPath | Out-Null
+}
+
+Write-Host "`n[REPOSITORIOS] Ingresa los nombres de tus Clientes/Proyectos principales (separados por coma):" -ForegroundColor Yellow
+Write-Host "(Ej: ClientA, ClientB, Personal, CompanyName)" -ForegroundColor Gray
+$clientInput = Read-Host " -> Nombres de Clientes/Proyectos"
+
+$clientNames = $clientInput -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+
+foreach ($client in $clientNames) {
+    Write-Host "Procesando cliente/proyecto: $client" -ForegroundColor DarkYellow
+    
+    # Define la estructura Backend y Frontend
+    $clientBackendPath = Join-Path -Path $baseRepoPath -ChildPath "$client\Backend"
+    $clientFrontendPath = Join-Path -Path $baseRepoPath -ChildPath "$client\Frontend"
+
+    # Creación
+    New-Item -ItemType Directory -Force -Path $clientBackendPath | Out-Null
+    New-Item -ItemType Directory -Force -Path $clientFrontendPath | Out-Null
+    Write-Host " -> Creada estructura para $client: Backend y Frontend" -ForegroundColor Green
 }
 
 Write-Header "2. HERRAMIENTAS BASE"
