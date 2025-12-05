@@ -331,5 +331,127 @@ La clave de la estructura C:\Dev\01_Repositories es que, una vez que el proyecto
 
 
 
-El Script: setup-new-pc.ps1
-Copia el siguiente código en un archivo .ps1.
+📝 Adaptación de la Estructura
+La estructura propuesta quedaría formalmente así, manteniendo la coherencia y jerarquía:
+C:\Dev\
+...
+├── 01_Repositories\        <- Contenedor principal de Código.
+│   │
+│   ├── ClientA\            <- Raíz del Cliente.
+│   │   ├── Backend\        <- Repositorio/Proyecto del API (.NET/NestJS).
+│   │   └── Frontend\       <- Repositorio/Proyecto de la UI (Angular/React).
+│   │
+│   ├── ClientB\            
+│   │   ├── Backend\
+│   │   └── Frontend\
+│   │
+│   ├── Personal\           <- Para tus proyectos propios o de entrenamiento.
+│   │   ├── MySideProject_API\
+│   │   └── MySideProject_UI\
+│   │
+│   └── CompanyName\        <- Para proyectos de tu empleador.
+...
+
+✅ Impacto de esta Adaptación
+En la Migración (Fase 2):
+
+Cuando migres tus proyectos existentes (usando el Move-Item de PowerShell), simplemente asegúrate de crear las subcarpetas Backend y Frontend en el destino antes de mover el contenido del repositorio.
+
+Ejemplo de Tarea de Terminal:
+
+PowerShell
+
+# 1. Crear la estructura
+New-Item -ItemType Directory -Force -Path "C:\Dev\01_Repositories\ClientA\Backend"
+# 2. Mover el proyecto
+Move-Item -Path "C:\OldProjects\ClientA_NetAPI" -Destination "C:\Dev\01_Repositories\ClientA\Backend\"
+En Git (Fase 3):
+
+Cada carpeta (Backend y Frontend) es un repositorio Git independiente. Esto es lo ideal, ya que cada capa debería tener su propio historial, branching strategy y pipeline de CI/CD.
+
+En la Configuración Local (Secrets):
+
+Al usar esta estructura, tu repositorio de secretos (02_Toolkit\01_Secrets) debería reflejar esta separación para claridad. Podrías tener archivos de configuración guardados como:
+
+ClientA/Backend/appsettings.Development.json
+
+ClientA/Frontend/.env.local
+
+Esta adaptación es un estándar de oro para la organización de proyectos fullstack y se integra perfectamente con la filosofía de estructura que hemos definido.
+
+Excelente. La modificación principal se centra en la Sección 1 de la creación de la estructura, ya que esta nueva jerarquía es dinámica (depende de los nombres de tus clientes).
+
+El cambio clave es que, en lugar de crear solo 01_Repositories, ahora preguntaremos interactivamente qué clientes manejas y crearemos automáticamente las subcarpetas anidadas Backend y Frontend para cada uno.
+
+Aquí tienes la modificación del script setup-new-pc-interactive.ps1:
+
+💾 Cambios en el Script setup-new-pc-interactive.ps1
+El cambio se realiza exclusivamente en la Sección 1. El resto del script (instalación de herramientas, gestión de secretos) permanece igual.
+
+1. Sección 1 (Creación de Estructura) — MODIFICADA
+Reemplaza la lógica anterior de la Sección 1 con la siguiente:
+
+PowerShell
+
+Write-Header "1. CREANDO ESTRUCTURA DE CARPETAS (La Zona de Trabajo)"
+
+# Carpetas estáticas (toolkit, docs, etc.)
+$staticFolders = @(
+    "C:\Dev\00_Inbox",
+    "C:\Dev\02_Toolkit",
+    "C:\Dev\03_KnowledgeBase",
+    "C:\Dev\04_DockerVolumes"
+)
+
+foreach ($folder in $staticFolders) {
+    if (!(Test-Path $folder)) {
+        New-Item -ItemType Directory -Force -Path $folder | Out-Null
+        Write-Host "Creado: $folder" -ForegroundColor Green
+    } else {
+        Write-Host "Existe: $folder" -ForegroundColor DarkGray
+    }
+}
+
+# --- Lógica Interactiva para 01_Repositories ---
+$baseRepoPath = "C:\Dev\01_Repositories"
+
+if (!(Test-Path $baseRepoPath)) {
+    New-Item -ItemType Directory -Force -Path $baseRepoPath | Out-Null
+}
+
+Write-Host "`n[REPOSITORIOS] Ingresa los nombres de tus Clientes/Proyectos principales (separados por coma):" -ForegroundColor Yellow
+Write-Host "(Ej: ClientA, ClientB, Personal, CompanyName)" -ForegroundColor Gray
+$clientInput = Read-Host " -> Nombres de Clientes/Proyectos"
+
+$clientNames = $clientInput -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+
+foreach ($client in $clientNames) {
+    Write-Host "Procesando cliente/proyecto: $client" -ForegroundColor DarkYellow
+    
+    # Define la estructura Backend y Frontend
+    $clientBackendPath = Join-Path -Path $baseRepoPath -ChildPath "$client\Backend"
+    $clientFrontendPath = Join-Path -Path $baseRepoPath -ChildPath "$client\Frontend"
+
+    # Creación
+    New-Item -ItemType Directory -Force -Path $clientBackendPath | Out-Null
+    New-Item -ItemType Directory -Force -Path $clientFrontendPath | Out-Null
+    Write-Host " -> Creada estructura para $client: Backend y Frontend" -ForegroundColor Green
+}
+🔑 Consideraciones Adicionales (Sección 7 y Migración)
+Aunque la Sección 7 (Gestión de Secretos) no requiere cambios de código, esta nueva estructura tiene una implicación directa en cómo organizas tus secretos:
+
+Estructura de Secretos Espejo: Tu repositorio de secretos (C:\Dev\02_Toolkit\01_Secrets) ahora debería tener una estructura que refleje la de 01_Repositories.
+
+Ejemplo de Estructura del Repositorio de Secretos:
+
+Plaintext
+
+01_Secrets\
+├── ClientA\
+│   ├── Backend\
+│   │   └── appsettings.Development.json
+│   └── Frontend\
+│       └── .env.local
+├── ClientB\
+└── Personal\
+Al clonar un proyecto de código fuente (ej: ClientA/Backend), simplemente tendrás que copiar los archivos de configuración desde 02_Toolkit\01_Secrets\ClientA\Backend a la raíz de tu proyecto recién clonado. Esto mantiene el principio de la separación de código y configuración de manera muy limpia.
