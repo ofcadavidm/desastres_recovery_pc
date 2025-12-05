@@ -37,6 +37,7 @@ function Confirm-Installation {
 function Install-WingetPackage {
     param($id, $name)
     Write-Host "Solicitando instalación de $name..." -ForegroundColor Gray
+    # El comando winget con las flags de aceptación de acuerdos
     winget install --id $id -e --source winget --accept-package-agreements --accept-source-agreements
     if ($?) { Write-Host "$name procesado correctamente." -ForegroundColor Green }
 }
@@ -85,7 +86,8 @@ foreach ($client in $clientNames) {
     # Creación
     New-Item -ItemType Directory -Force -Path $clientBackendPath | Out-Null
     New-Item -ItemType Directory -Force -Path $clientFrontendPath | Out-Null
-    Write-Host " -> Creada estructura para $client: Backend y Frontend" -ForegroundColor Green
+    # CORRECCIÓN DEL ERROR DE PARSING: Se usa ${client} en lugar de $client:
+    Write-Host " -> Creada estructura para ${client}: Backend y Frontend" -ForegroundColor Green
 }
 
 Write-Header "2. HERRAMIENTAS BASE"
@@ -119,7 +121,7 @@ if (Confirm-Installation "NVM (Node Version Manager)" "nvm") {
 }
 
 if (Confirm-Installation ".NET 8 SDK" "dotnet") {
-    Install-WingetPackage "Microsoft.DotNet.SDK.8" ".NET 8 SDK"
+    Install-WingetPackage "Microsoft.DotNet.SDK.8" ".".NET 8 SDK"
 }
 
 Write-Header "5. INFRAESTRUCTURA & CLOUD"
